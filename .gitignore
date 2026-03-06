@@ -1,0 +1,9 @@
+# Ignore raw Keyence reports (XLS, CSV, PDF)
+data/raw/
+*.csv
+*.xlsx
+*.pdf
+
+# Ignore Python temporary files
+__pycache__/
+*.pyc

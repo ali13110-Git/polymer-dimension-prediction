@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dimension Predictor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white p-10">
+    <div class="max-w-2xl mx-auto space-y-10">
+        <h1 class="text-3xl font-bold">Polymer Predictor</h1>
+
+        <div class="p-6 bg-slate-800 rounded-xl border border-blue-500/30">
+            <h2 class="text-xl mb-4 text-blue-400">1. Calibration</h2>
+            <input type="file" id="initFile" class="mb-2 block w-full text-sm">
+            <input type="file" id="finalFile" class="mb-4 block w-full text-sm">
+            <button onclick="handleTrain()" class="bg-blue-600 px-6 py-2 rounded">Calibrate</button>
+        </div>
+
+        <div class="p-6 bg-slate-800 rounded-xl border border-emerald-500/30">
+            <h2 class="text-xl mb-4 text-emerald-400">2. Prediction</h2>
+            <input type="file" id="startupFile" class="mb-4 block w-full text-sm">
+            <button onclick="handlePredict()" class="bg-emerald-600 px-6 py-2 rounded">Predict</button>
+        </div>
+
+        <div id="status" class="p-4 rounded hidden border"></div>
+    </div>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        function showStatus(msg, isError = false) {
+            statusDiv.innerText = msg;
+            statusDiv.className = `p-4 rounded border ${isError ? 'bg-red-900/20 border-red-500' : 'bg-emerald-900/20 border-emerald-500'}`;
+            statusDiv.classList.remove('hidden');
+        }
+
+        async function handleTrain() {
+            const formData = new FormData();
+            formData.append('initial_file', document.getElementById('initFile').files[0]);
+            formData.append('final_file', document.getElementById('finalFile').files[0]);
+            showStatus("Uploading to Pi...");
+            try {
+                // IMPORTANT: Added /check-dimension/ prefix so Worker catches it
+                const res = await fetch('/check-dimension/train', { method: 'POST', body: formData });
+                const data = await res.json();
+                showStatus(data.status === 'ok' ? "Success!" : "Error: " + data.detail, data.status !== 'ok');
+            } catch (e) { showStatus("Worker/Tunnel Error", true); }
+        }
+
+        async function handlePredict() {
+            const formData = new FormData();
+            formData.append('startup_file', document.getElementById('startupFile').files[0]);
+            showStatus("Predicting...");
+            try {
+                // IMPORTANT: Added /check-dimension/ prefix so Worker catches it
+                const res = await fetch('/check-dimension/predict', { method: 'POST', body: formData });
+                const data = await res.json();
+                showStatus("Done! Check browser console for data.");
+                console.log(data);
+            } catch (e) { showStatus("Worker/Tunnel Error", true); }
+        }
+    </script>
+</body>
+</html>
